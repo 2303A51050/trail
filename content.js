@@ -1,28 +1,30 @@
-// console.clear();
+// patched content.js
+// Based on your original file (reference). Key fixes:
+//  - use relative link (no leading '/')
+//  - avoid duplicate IDs for repeated elements (use classes instead)
+//  - img alt added, better logging, badge fallback handling
+// Original file reviewed: content.js. :contentReference[oaicite:1]{index=1}
 
-let contentTitle;
+console.clear();
 
 console.log(document.cookie);
 
-// Import cart functions
+// Add-to-cart (supabase REST, with localStorage fallback)
 async function addItemToCart(productId, productName) {
   try {
+    // If supabase config missing, use localStorage fallback
     if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
-      // Fallback to localStorage
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
       const existing = cart.find(item => item.product_id == productId);
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        cart.push({ product_id: productId, quantity: 1 });
-      }
+      if (existing) existing.quantity += 1;
+      else cart.push({ product_id: productId, quantity: 1 });
       localStorage.setItem('cart', JSON.stringify(cart));
-      alert(`${productName} added to cart!`);
+      alert(`${productName} added to cart (local).`);
       updateBadge();
       return;
     }
-    
-    // Add to Supabase
+
+    // Insert into Supabase cart table via REST
     const url = `${window.SUPABASE_URL}/rest/v1/cart`;
     const res = await fetch(url, {
       method: 'POST',
@@ -33,8 +35,13 @@ async function addItemToCart(productId, productName) {
       },
       body: JSON.stringify({ product_id: productId, quantity: 1 })
     });
-    if (!res.ok) throw new Error('Failed to add to cart');
-    alert(`${productName} added to cart!`);
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Failed to add to cart (${res.status}): ${body}`);
+    }
+
+    alert(`${productName} added to cart.`);
     updateBadge();
   } catch (err) {
     console.error('Add to cart error:', err);
@@ -44,83 +51,84 @@ async function addItemToCart(productId, productName) {
 
 function updateBadge() {
   const badgeEl = document.getElementById('badge');
-  if (!badgeEl) return;
-  
-  try {
-    if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-      // Fetch cart items from Supabase
-      const url = `${window.SUPABASE_URL}/rest/v1/cart?select=quantity`;
-      fetch(url, {
-        headers: {
-          apikey: window.SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
-        }
+  if (!badgeEl) {
+    // Header might not be present on all pages — that's OK
+    console.debug('Badge element (#badge) not found; skipping badge update.');
+    return;
+  }
+
+  // If supabase config present, fetch cart rows and sum quantities
+  if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    const url = `${window.SUPABASE_URL}/rest/v1/cart?select=quantity`;
+    fetch(url, {
+      headers: {
+        apikey: window.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`
+      }
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to fetch cart: ' + r.status);
+        return r.json();
       })
-        .then(r => {
-          if (!r.ok) throw new Error('Failed to fetch cart');
-          return r.json();
-        })
-        .then(data => {
-          // Sum all quantities in cart
-          const totalItems = Array.isArray(data) ? data.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
-          badgeEl.innerHTML = totalItems;
-          console.log('Cart badge updated:', totalItems);
-        })
-        .catch(err => {
-          console.error('Error fetching cart:', err);
-          // Fallback to localStorage
-          const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-          const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-          badgeEl.innerHTML = total;
-        });
-    } else {
-      // Use localStorage
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const total = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
-      badgeEl.innerHTML = total;
-    }
-  } catch (err) {
-    console.error('Update badge error:', err);
+      .then(data => {
+        const totalItems = Array.isArray(data) ? data.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0) : 0;
+        badgeEl.textContent = totalItems;
+        console.log('Cart badge updated (server):', totalItems);
+      })
+      .catch(err => {
+        console.warn('Error fetching cart from server, falling back to localStorage:', err);
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const total = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+        badgeEl.textContent = total;
+      });
+  } else {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const total = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    badgeEl.textContent = total;
+    console.log('Cart badge updated (local):', total);
   }
 }
 
+// Create a product card for clothing listing
 function dynamicClothingSection(ob) {
-  let boxDiv = document.createElement("div");
-  boxDiv.id = "box";
+  const boxDiv = document.createElement("div");
+  boxDiv.className = "box";
 
-  let boxLink = document.createElement("a");
-  // FIX: Ensure product ID is correctly passed
-  boxLink.href = `/contentDetails.html?id=${ob.id}`;
-  console.log('Created link for product:', ob.id, 'Name:', ob.name);
+  const boxLink = document.createElement("a");
+  // IMPORTANT: use relative path (project site safe) and encode the id
+  boxLink.href = "contentDetails.html?id=" + encodeURIComponent(ob.id);
+  boxLink.className = "productLink";
+  boxLink.setAttribute('aria-label', `View details for ${ob.name}`);
 
-  let imgTag = document.createElement("img");
-  imgTag.src = ob.preview;
+  const imgTag = document.createElement("img");
+  imgTag.src = ob.preview || '';
+  imgTag.alt = ob.name || 'Product image';
+  imgTag.loading = 'lazy';
 
-  let detailsDiv = document.createElement("div");
-  detailsDiv.id = "details";
+  const detailsDiv = document.createElement("div");
+  detailsDiv.className = "details";
 
-  let h3 = document.createElement("h3");
-  let h3Text = document.createTextNode(ob.name);
-  h3.appendChild(h3Text);
+  const h3 = document.createElement("h3");
+  h3.textContent = ob.name || 'Untitled';
 
-  let h4 = document.createElement("h4");
-  let h4Text = document.createTextNode(ob.brand);
-  h4.appendChild(h4Text);
+  const h4 = document.createElement("h4");
+  h4.textContent = ob.brand || '';
 
-  let h2 = document.createElement("h2");
-  let h2Text = document.createTextNode("rs  " + ob.price);
-  h2.appendChild(h2Text);
+  const h2 = document.createElement("h2");
+  h2.textContent = "Rs " + (ob.price != null ? ob.price : '—');
 
-  // Add "Add to Cart" button
-  let addToCartBtn = document.createElement("button");
+  // Add "Add to Cart" button — placed inside details but preventing navigation
+  const addToCartBtn = document.createElement("button");
+  addToCartBtn.type = "button";
   addToCartBtn.textContent = "Add to Cart";
-  addToCartBtn.style.cssText = "margin-top: 10px; padding: 8px 12px; background: #037a7a; color: white; border: none; border-radius: 5px; cursor: pointer;";
-  addToCartBtn.addEventListener("click", function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  addToCartBtn.style.cssText = "margin-top:10px;padding:8px 12px;background:#037a7a;color:#fff;border:none;border-radius:5px;cursor:pointer;";
+  addToCartBtn.addEventListener("click", function (e) {
+    e.preventDefault();      // prevent anchor navigation when button clicked
+    e.stopPropagation();     // stop event from bubbling to anchor
     addItemToCart(ob.id, ob.name);
   });
 
+  // Build DOM
   boxDiv.appendChild(boxLink);
   boxLink.appendChild(imgTag);
   boxLink.appendChild(detailsDiv);
@@ -132,17 +140,15 @@ function dynamicClothingSection(ob) {
   return boxDiv;
 }
 
-//  Initialize products when DOM is ready
+// Initialize products when DOM is ready
 function initializeProducts() {
-  // Re-grab containers to ensure they exist
   const containerClothing = document.getElementById("containerClothing");
-  
   if (!containerClothing) {
-    console.warn('containerClothing not found on this page');
+    console.warn('containerClothing not found on this page — skipping product render.');
     return;
   }
 
-  // ONLY USE SUPABASE - Remove MockAPI fallback
+  // Ensure Supabase config is present; show message if not
   if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
     const msg = document.createElement('div');
     msg.style.padding = '20px';
@@ -170,7 +176,6 @@ function initializeProducts() {
     })
     .then(data => {
       console.log('All products from Supabase:', data);
-      
       if (!Array.isArray(data) || data.length === 0) {
         const msg = document.createElement('div');
         msg.style.padding = '20px';
@@ -180,14 +185,14 @@ function initializeProducts() {
         return;
       }
 
-      // Filter and render clothing products only
       let addedClothing = 0;
       for (let i = 0; i < data.length; i++) {
         const item = data[i];
-        // Only render clothing items (isAccessory = false or undefined)
-        if (!item.isAccessory) { 
-          containerClothing.appendChild(dynamicClothingSection(item)); 
-          addedClothing++; 
+        // Render items that aren't accessories. Be liberal with casing.
+        const accessoryFlag = item.isAccessory === true || item.isaccessory === true;
+        if (!accessoryFlag) {
+          containerClothing.appendChild(dynamicClothingSection(item));
+          addedClothing++;
         }
       }
       console.log('Rendered:', addedClothing, 'clothing items');
@@ -204,12 +209,9 @@ function initializeProducts() {
     });
 }
 
-// Initialize products when DOM is ready
+// DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeProducts);
 } else {
-  // DOM already loaded (e.g., script loaded after HTML)
   initializeProducts();
 }
-
-// No global scrollbar compensation here — handled in login module when modal opens
