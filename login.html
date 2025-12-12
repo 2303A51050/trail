@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>MyShop | E-Commerce Website</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="https://yt3.ggpht.com/a/AGF-l78km1YyNXmF0r3-0CycCA0HLA_i6zYn_8NZEg=s900-c-k-c0xffffffff-no-rj-mo" />
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+  />
+
+  <!-- Slick Carousel -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick-theme.min.css"
+  />
+
+  <style>
+    body {
+      font-family: "Lato", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fafafa;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #222;
+      color: #fff;
+      padding: 15px 40px;
+    }
+
+    header .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    header .icons {
+      display: flex;
+      gap: 20px;
+      font-size: 22px;
+    }
+
+    header .icons i {
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    header .icons i:hover {
+      color: #ff9800;
+    }
+
+    /* Slider */
+    #containerSlider img {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+    }
+
+    /* Footer */
+    footer {
+      background: #111;
+      color: #ddd;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* Popup Styles */
+    .popup-overlay {
+      position: fixed;
+      display: none;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup-content {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 15px;
+      width: 350px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .popup-content h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .popup-content input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .popup-content button {
+      width: 100%;
+      padding: 10px;
+      background: #ff9800;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .popup-content button:hover {
+      background: #e68900;
+    }
+
+    .toggle-text {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .toggle-text a {
+      color: #ff9800;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 25px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .close-btn:hover {
+      color: #000;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">MyShop</div>
+    <div class="icons">
+      <i class="fa-solid fa-cart-shopping" title="Cart"></i>
+      <i class="fa-solid fa-user login-icon" title="Login / Sign Up"></i>
+    </div>
+  </header>
+
+  <!-- SLIDER -->
+  <div id="containerSlider">
+    <div><img src="https://images.unsplash.com/photo-1607083206989-29c7eaa1f50d" alt="1"></div>
+    <div><img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f" alt="2"></div>
+    <div><img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d" alt="3"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <section style="padding: 40px; text-align: center;">
+    <h2>Welcome to MyShop</h2>
+    <p>Explore our latest collections of fashion, electronics, and more!</p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 MyShop. All Rights Reserved.</p>
+  </footer>
+
+  <!-- POPUP -->
+  <div id="authPopup" class="popup-overlay">
+    <div class="popup-content">
+      <span class="close-btn" id="closePopup">&times;</span>
+
+      <!-- LOGIN FORM -->
+      <div id="loginFormContainer">
+        <h2>Login</h2>
+        <form id="loginForm">
+          <input type="email" id="loginEmail" placeholder="Email" required />
+          <input type="password" id="loginPassword" placeholder="Password" required />
+          <button type="submit">Login</button>
+        </form>
+        <p class="toggle-text">
+          Don’t have an account? <a href="#" id="showSignup">Sign Up</a>
+        </p>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div id="signupFormContainer" class="hidden">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+          <input type="text" id="signupName" placeholder="Full Name" required />
+          <input type="email" id="signupEmail" placeholder="Email" required />
+          <input type="password" id="signupPassword" placeholder="Password" required />
+          <button type="submit">Sign Up</button>
+        </form>
+        <p class="toggle-text">
+          Already have an account? <a href="#" id="showLogin">Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS LIBRARIES -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      // Initialize slider
+      $("#containerSlider").slick({
+        dots: true,
+        infinite: true,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 2000,
+      });
+
+      // Popup handling
+      const popup = document.getElementById("authPopup");
+      const loginIcon = document.querySelector(".login-icon");
+      const closeBtn = document.getElementById("closePopup");
+      const loginFormContainer = document.getElementById("loginFormContainer");
+      const signupFormContainer = document.getElementById("signupFormContainer");
+      const showSignup = document.getElementById("showSignup");
+      const showLogin = document.getElementById("showLogin");
+
+      // OPEN popup
+      loginIcon.addEventListener("click", () => {
+        popup.style.display = "flex";
+        loginFormContainer.classList.remove("hidden");
+        signupFormContainer.classList.add("hidden");
+      });
+
+      // CLOSE popup
+      closeBtn.addEventListener("click", () => (popup.style.display = "none"));
+      popup.addEventListener("click", (e) => {
+        if (e.target === popup) popup.style.display = "none";
+      });
+
+      // SWITCH FORMS
+      showSignup.addEventListener("click", (e) => {
+        e.preventDefault();
+        loginFormContainer.classList.add("hidden");
+        signupFormContainer.classList.remove("hidden");
+      });
+
+      showLogin.addEventListener("click", (e) => {
+        e.preventDefault();
+        signupFormContainer.classList.add("hidden");
+        loginFormContainer.classList.remove("hidden");
+      });
+
+      // Handle Login
+      document.getElementById("loginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Login successful!");
+        popup.style.display = "none";
+      });
+
+      // Handle Signup
+      document.getElementById("signupForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        alert("Signup successful!");
+        popup.style.display = "none";
+      });
+    });
+  </script>
+</body>
+</html>
